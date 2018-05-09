@@ -11,7 +11,7 @@ def fetch_crimes():
     df = df[['Block','Primary_Type','Arrest','Year','Latitude','Longitude']]
     df['Block'] = df["Block"].apply(lambda x: x.lower())
     df = pd.DataFrame({'ArrestCount': df.groupby(['Block','Primary_Type','Year','Arrest','Latitude','Longitude']).size()}).reset_index()
-    df.loc[df['Arrest'] == False, 'ArrestCount'] = 0
+    #df.loc[df['Arrest'] == False, 'ArrestCount'] = 0
     return df
 
 
@@ -53,8 +53,10 @@ def generate_crime_reports_blocks():
                         crime_frame['Longitude'] <= minLong) & (crime_frame['Longitude'] <= maxLong)]
             if blocks_3_crimes.size > 0:
 
-                blocks_3_crimes1 = pd.DataFrame(
-                    {'total': blocks_3_crimes.groupby(["Primary_Type", "Year"]).size()}).reset_index()
+                blocks_3_crimes1 = blocks_3_crimes.groupby(['Primary_Type', 'Year'], as_index=False)[
+                    ["ArrestCount"]].sum()
+                blocks_3_crimes1 = blocks_3_crimes1.rename(columns={'ArrestCount':'total'})
+                blocks_3_crimes.loc[blocks_3_crimes['Arrest'] == False, 'ArrestCount'] = 0
                 blocks_3_crimes = blocks_3_crimes.groupby(['Primary_Type', 'Year'], as_index=False)[
                     ["ArrestCount"]].sum()
                 blocks_3_crimes = pd.merge(blocks_3_crimes, blocks_3_crimes1, on=['Primary_Type', 'Year'])
@@ -81,7 +83,7 @@ def generate_crime_reports_blocks():
 
     final_frame['Business Type'] = final_frame['Business Type'].apply(lambda x: refine_type(x))
 
-    final_frame.to_csv('Results/query1_result.csv', encoding='utf-8', index=False)
+    final_frame.to_csv('Results/query_1_result.csv', encoding='utf-8', index=False)
 
     print("Crime report is Generated with the name query_1_result.csv in the Results folder")
 
@@ -99,3 +101,5 @@ def refine_type(x):
 
 if __name__ == 'main':
     generate_crime_reports_blocks()
+
+generate_crime_reports_blocks()
